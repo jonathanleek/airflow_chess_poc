@@ -8,6 +8,10 @@ def create_tournament_bracket(participants_json):
     participants_data = json.loads(participants_json)
     participants = participants_data['participants']
 
+    # Parse the input JSON
+    participants_data = json.loads(participants_json)
+    participants = participants_data['participants']
+
     # Extract participant names
     participant_names = [p['participant_name'] for p in participants]
 
@@ -30,7 +34,8 @@ def create_tournament_bracket(participants_json):
             "match": f"match{i // 2 + 1}",
             "team1": participant_names[i],
             "team2": participant_names[i + 1],
-            "score": (None, None)
+            "game_status": "to_be_played",
+            "board_state": []
         }
         round1.append(match)
 
@@ -45,7 +50,8 @@ def create_tournament_bracket(participants_json):
                 "match": f"match{i + 1}",
                 "team1": None,
                 "team2": None,
-                "score": (None, None)
+                "game_status": "to_be_played",
+                "board_state": []
             }
             round_matches.append(match)
         bracket[f"round{round_num}"] = round_matches

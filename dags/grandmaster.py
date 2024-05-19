@@ -3,7 +3,7 @@ doc_md_DAG = """
 
 A dag that administrates the tournament as a whole. 
 	• If no bracket dictionary exists, Reads a json of participants from the S3 bucket, and generates the Bracket Dictionary.
-	• If Bracket Dictionary exists, update it based on game files,then generate any non-existent Game DAGs and trigger them
+	• If Bracket Dictionary exists, generate any non-existent Game DAGs and trigger them
 """
 
 from airflow import DAG
@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from include.create_tournament_bracket import create_and_upload_tournament_bracket
-from include.retrive_json_from_s3 import retrieve_json_from_s3
+from include.retrieve_json_from_s3 import retrieve_json_from_s3
 
 bucket = ''
 aws_conn_id = ''
