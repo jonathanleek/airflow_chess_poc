@@ -4,3 +4,4 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
     content = s3_hook.read_key(key, bucket_name=bucket_name)
     # Push the content to XCom for the next task to retrieve
     kwargs['ti'].xcom_push(key=output_key, value=content)
+    return content

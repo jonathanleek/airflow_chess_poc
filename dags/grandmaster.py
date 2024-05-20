@@ -12,7 +12,7 @@ from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from include.create_tournament_bracket import create_and_upload_tournament_bracket
 from include.retrieve_json_from_s3 import retrieve_json_from_s3
-
+from include.process_to_be_played_matches import process_to_be_played_matches
 bucket = ''
 aws_conn_id = ''
 
@@ -20,7 +20,7 @@ def bracket_branch_function(**kwargs):
     ti = kwargs['ti']
     bracket_exists = ti.xcom_pull(task_ids='check_for_bracket')
     if bracket_exists:
-        return 'dummy_task'
+        return 'process_to_be_played_matches'
     else:
         return 'get_participants_json'
 
@@ -52,7 +52,7 @@ with DAG(
 
     bracket_creation_branch = BranchPythonOperator(
         task_id='bracket_creation_branch',
-        python_callable=bracket_branch_function(),
+        python_callable=bracket_branch_function,
         provide_context=True
     )
 
@@ -66,8 +66,8 @@ with DAG(
         }
     )
 
-    generate_bracket_dict = PythonOperator(
-        task_id='generate_bracket_dict',
+    generate_bracket_json = PythonOperator(
+        task_id='generate_bracket_json',
         python_callable=create_and_upload_tournament_bracket,
         op_kwargs={
             'participants_json': "{{ ti.xcom_pull(task_ids='get_participants_json', key='participants_json') }}",
@@ -75,6 +75,16 @@ with DAG(
         }
     )
 
+    process_matches = PythonOperator(
+        task_id='process_to_be_played_matches',
+        python_callable=process_to_be_played_matches,
+        op_kwargs={
+            'bucket_name': 'bucket',
+            'key': 'bracket.json',
+        }
+    )
+
+
 check_for_participants_json >> check_for_bracket >> bracket_creation_branch
-    bracket_creation_branch >> get_participants_json >> generate_bracket_dict
-    bracket_creation_branch >> dummy_task
+    bracket_creation_branch >> get_participants_json >> generate_bracket_json
+    bracket_creation_branch >> process_to_be_played_matches
