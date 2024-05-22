@@ -1,20 +1,12 @@
-doc_md_DAG = """
-### grandmaster
-
-A dag that administrates the tournament as a whole. 
-	• If no bracket dictionary exists, Reads a json of participants from the S3 bucket, and generates the Bracket Dictionary.
-	• If Bracket Dictionary exists, generate any non-existent Game DAGs and trigger them
-"""
-
+import json
 from airflow import DAG
-from datetime import datetime, timedelta
-from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-from include.create_tournament_bracket import create_and_upload_tournament_bracket
+from airflow.utils.dates import days_ago
+from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from include.retrieve_json_from_s3 import retrieve_json_from_s3
 from include.process_to_be_played_matches import process_to_be_played_matches
-bucket = ''
-aws_conn_id = ''
+from include.create_and_trigger_player_dags import create_and_trigger_player_dags
+from include.create_tournament_bracket import create_tournament_bracket
 
 def bracket_branch_function(**kwargs):
     ti = kwargs['ti']
@@ -24,19 +16,24 @@ def bracket_branch_function(**kwargs):
     else:
         return 'get_participants_json'
 
+default_args = {
+    'owner': 'airflow',
+    'start_date': days_ago(1)
+}
 
 with DAG(
-    start_date=datetime(2024, 5, 17),
-    max_active_runs=1,
+    dag_id='grandmaster',
+    default_args=default_args,
+    description='A dag that administrates the tournament as a whole.',
     schedule_interval=None,
-    doc_md=doc_md_DAG,
+    catchup=False,
 ) as dag:
 
     check_for_participants_json = S3KeySensor(
         task_id='check_for_participants_json',
         bucket_key='participants.json',
         bucket_name='bucket',
-        aws_conn_id=aws_conn_id,
+        aws_conn_id='aws_conn_id',
         timeout=60,
         poke_interval=5
     )
@@ -45,7 +42,7 @@ with DAG(
         task_id='check_for_bracket',
         bucket_key='bracket.json',
         bucket_name='bucket',
-        aws_conn_id=aws_conn_id,
+        aws_conn_id='aws_conn_id',
         timeout=60,
         poke_interval=5
     )
@@ -60,7 +57,7 @@ with DAG(
         task_id='get_participants_json',
         python_callable=retrieve_json_from_s3,
         op_kwargs={
-            'bucket_name': bucket,
+            'bucket_name': 'bucket',
             'key': 'participants.json',
             'output_key': 'participants'
         }
@@ -68,10 +65,10 @@ with DAG(
 
     generate_bracket_json = PythonOperator(
         task_id='generate_bracket_json',
-        python_callable=create_and_upload_tournament_bracket,
+        python_callable=create_tournament_bracket,
         op_kwargs={
-            'participants_json': "{{ ti.xcom_pull(task_ids='get_participants_json', key='participants_json') }}",
-            'bucket_name': bucket
+            'participants_json': "{{ ti.xcom_pull(task_ids='get_participants_json', key='participants') }}",
+            'bucket_name': 'bucket'
         }
     )
 
@@ -84,7 +81,18 @@ with DAG(
         }
     )
 
+    trigger_player_dags = PythonOperator(
+        task_id='trigger_player_dags',
+        python_callable=create_and_trigger_player_dags,
+        op_kwargs={
+            'bucket_name': 'bucket',
+            'key': 'bracket.json',
+            'repo_name': 'civic-data-warehouse'
+        },
+        provide_context=True
+    )
 
-check_for_participants_json >> check_for_bracket >> bracket_creation_branch
+    check_for_participants_json >> check_for_bracket >> bracket_creation_branch
     bracket_creation_branch >> get_participants_json >> generate_bracket_json
-    bracket_creation_branch >> process_to_be_played_matches
+    bracket_creation_branch >> process_matches >> trigger_player_dags
+    generate_bracket_json >> process_matches
