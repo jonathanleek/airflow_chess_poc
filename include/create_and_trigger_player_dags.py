@@ -5,10 +5,10 @@ from airflow.models import DagBag, DagRun
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 
-def create_and_trigger_player_dags(bucket_name, key, repo_name, **kwargs):
+def create_and_trigger_player_dags(bucket_name, key, repo_url, **kwargs):
     ti = kwargs['ti']
     matches = ti.xcom_pull(task_ids='process_to_be_played_matches')
-    github_repo_url = f"https://github.com/jonathanleek/{repo_name}"
+    github_repo_url = repo_url
     dag_bag = DagBag()
 
     for match in matches:

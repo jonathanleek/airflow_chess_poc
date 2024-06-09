@@ -8,10 +8,6 @@ def create_tournament_bracket(participants_json):
     participants_data = json.loads(participants_json)
     participants = participants_data['participants']
 
-    # Parse the input JSON
-    participants_data = json.loads(participants_json)
-    participants = participants_data['participants']
-
     # Extract participant names
     participant_names = [p['participant_name'] for p in participants]
 
@@ -67,7 +63,7 @@ def create_and_upload_tournament_bracket(participants_json, bucket_name, **kwarg
     # Upload to S3
     s3_hook = S3Hook()
     s3_hook.load_string(
-        string_date = bracket_json['date'],
+        string_data = bracket_json,
         bucket_name = bucket_name,
         key = 'bracket.json',
         replace=True

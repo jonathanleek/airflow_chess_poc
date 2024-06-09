@@ -3,13 +3,16 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.utils.dates import days_ago
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
+from airflow.utils.trigger_rule import TriggerRule
+
 from include.retrieve_json_from_s3 import retrieve_json_from_s3
 from include.process_to_be_played_matches import process_to_be_played_matches
 from include.create_and_trigger_player_dags import create_and_trigger_player_dags
-from include.create_tournament_bracket import create_tournament_bracket
+from include.create_tournament_bracket import create_and_upload_tournament_bracket
 
 aws_conn_id = 'aws_default'
 bucket_name = "airflow-chess"
+repo_url = "https://github.com/jonathanleek/airflow_chess_poc"
 
 def bracket_branch_function(**kwargs):
     ti = kwargs['ti']
@@ -37,7 +40,7 @@ with DAG(
         bucket_key='participants.json',
         bucket_name=bucket_name,
         aws_conn_id=aws_conn_id,
-        timeout=60,
+        timeout=30,
         poke_interval=5
     )
 
@@ -46,14 +49,15 @@ with DAG(
         bucket_key='bracket.json',
         bucket_name=bucket_name,
         aws_conn_id=aws_conn_id,
-        timeout=60,
+        timeout=30,
         poke_interval=5
     )
 
     bracket_creation_branch = BranchPythonOperator(
         task_id='bracket_creation_branch',
         python_callable=bracket_branch_function,
-        provide_context=True
+        provide_context=True,
+        trigger_rule='all_done'
     )
 
     get_participants_json = PythonOperator(
@@ -68,7 +72,8 @@ with DAG(
 
     generate_bracket_json = PythonOperator(
         task_id='generate_bracket_json',
-        python_callable=create_tournament_bracket,
+        python_callable=create_and_upload_tournament_bracket,
+        trigger_rule='all_done',
         op_kwargs={
             'participants_json': "{{ ti.xcom_pull(task_ids='get_participants_json', key='participants') }}",
             'bucket_name': bucket_name
@@ -90,7 +95,7 @@ with DAG(
         op_kwargs={
             'bucket_name': bucket_name,
             'key': 'bracket.json',
-            'repo_name': 'civic-data-warehouse'
+            'repo_url': repo_url
         },
         provide_context=True
     )
