@@ -2,33 +2,33 @@
   "participants": [
     {
       "participant_name": "Egon Spengler",
-      "participant_email": "Egon_Spengler@ghostbusters.com",
-      "participant_branch": ""
+      "participant_email": "egon.spengler@ghostbusters.com",
+      "participant_branch": "egon_branch"
     },
     {
-      "participants_name": "Ray Stantz",
-      "participant_email": "Ray_Stantz@ghostbusters.com",
-      "participant_branch": ""
+      "participant_name": "Ray Stantz",
+      "participant_email": "ray.stantz@ghostbusters.com",
+      "participant_branch": "ray_branch"
     },
     {
-      "participants_name": "Peter Venkman",
-      "participant_email": "Peter_Venkman@ghostbusters.com",
-      "participant_branch": ""
+      "participant_name": "Peter Venkman",
+      "participant_email": "peter.venkman@ghostbusters.com",
+      "participant_branch": "peter_branch"
     },
     {
-      "participants_name": "Winston Zeddemore",
-      "participant_email": "Winston_Zeddemore@ghostbusters.com",
-      "participant_branch": ""
+      "participant_name": "Winston Zeddemore",
+      "participant_email": "winston.zeddemore@ghostbusters.com",
+      "participant_branch": "winston_branch"
     },
     {
-      "participants_name": "Louis Tully",
-      "participant_email": "Louis Tully@ghostbusters.com",
-      "participant_branch": ""
+      "participant_name": "Louis Tully",
+      "participant_email": "louis.tully@ghostbusters.com",
+      "participant_branch": "louis_branch"
     },
     {
-      "participants_name": "Janine Melnitz",
-      "participant_email": "Janine Melnitz@ghostbusters.com",
-      "participant_branch": ""
+      "participant_name": "Janine Melnitz",
+      "participant_email": "janine.melnitz@ghostbusters.com",
+      "participant_branch": "janine_branch"
     }
   ]
 }

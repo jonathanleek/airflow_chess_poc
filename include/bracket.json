@@ -1,0 +1,25 @@
+{
+    "round1": [
+        {
+            "match": "match1",
+            "team1": "Egon Spengler",
+            "team2": "Ray Stantz",
+            "game_status": "to_be_played",
+            "board_state": []
+        },
+        {
+            "match": "match2",
+            "team1": "Peter Venkman",
+            "team2": "Winston Zeddemore",
+            "game_status": "to_be_played",
+            "board_state": []
+        },
+        {
+            "match": "match3",
+            "team1": "Louis Tully",
+            "team2": "Janine Melnitz",
+            "game_status": "to_be_played",
+            "board_state": []
+        }
+    ]
+}
