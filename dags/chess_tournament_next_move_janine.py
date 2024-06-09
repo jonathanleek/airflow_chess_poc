@@ -45,7 +45,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='chess_tournament_next_move_egon',
+    dag_id='chess_tournament_next_move_janine',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
