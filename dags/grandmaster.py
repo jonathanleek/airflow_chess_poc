@@ -8,6 +8,9 @@ from include.process_to_be_played_matches import process_to_be_played_matches
 from include.create_and_trigger_player_dags import create_and_trigger_player_dags
 from include.create_tournament_bracket import create_tournament_bracket
 
+aws_conn_id = 'aws_default'
+bucket_name = "airflow-chess"
+
 def bracket_branch_function(**kwargs):
     ti = kwargs['ti']
     bracket_exists = ti.xcom_pull(task_ids='check_for_bracket')
@@ -32,8 +35,8 @@ with DAG(
     check_for_participants_json = S3KeySensor(
         task_id='check_for_participants_json',
         bucket_key='participants.json',
-        bucket_name='bucket',
-        aws_conn_id='aws_conn_id',
+        bucket_name=bucket_name,
+        aws_conn_id=aws_conn_id,
         timeout=60,
         poke_interval=5
     )
@@ -41,8 +44,8 @@ with DAG(
     check_for_bracket = S3KeySensor(
         task_id='check_for_bracket',
         bucket_key='bracket.json',
-        bucket_name='bucket',
-        aws_conn_id='aws_conn_id',
+        bucket_name=bucket_name,
+        aws_conn_id=aws_conn_id,
         timeout=60,
         poke_interval=5
     )
@@ -57,7 +60,7 @@ with DAG(
         task_id='get_participants_json',
         python_callable=retrieve_json_from_s3,
         op_kwargs={
-            'bucket_name': 'bucket',
+            'bucket_name': bucket_name,
             'key': 'participants.json',
             'output_key': 'participants'
         }
@@ -68,7 +71,7 @@ with DAG(
         python_callable=create_tournament_bracket,
         op_kwargs={
             'participants_json': "{{ ti.xcom_pull(task_ids='get_participants_json', key='participants') }}",
-            'bucket_name': 'bucket'
+            'bucket_name': bucket_name
         }
     )
 
@@ -76,7 +79,7 @@ with DAG(
         task_id='process_to_be_played_matches',
         python_callable=process_to_be_played_matches,
         op_kwargs={
-            'bucket_name': 'bucket',
+            'bucket_name': bucket_name,
             'key': 'bracket.json',
         }
     )
@@ -85,7 +88,7 @@ with DAG(
         task_id='trigger_player_dags',
         python_callable=create_and_trigger_player_dags,
         op_kwargs={
-            'bucket_name': 'bucket',
+            'bucket_name': bucket_name,
             'key': 'bracket.json',
             'repo_name': 'civic-data-warehouse'
         },
